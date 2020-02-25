@@ -1,0 +1,477 @@
+'use strict';
+// @flow
+/******************************************************************************
+ ******************************************************************************
+ **
+ ** Copyright (c) 2011-2017 VRVis Zentrum für Virtual Reality und Visualisierung
+ ** Forschungs-GmbH All rights reserved.
+ **
+ ************************************************************
+ **
+ ** THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF VRVis GmbH The copyright
+ ** notice above does not evidence any actual or intended publication of such
+ ** code.
+ **
+ ******************************************************************************
+ ******************************************************************************/
+
+// author: Florian Schulze <fschulze@vrvis.at>
+// author: Nicolas Swoboda <swoboda@vrvis.at>
+
+import * as React from 'react';
+import Renderer from './renderer';
+//import { toast } from 'react-toastify';
+import type { Brush, Mask, Mask2, Region, Connection } from './flowTypes';
+import CanvasOverlayTextbookLabels from './CanvasOverlayTextbookLabels';
+import styles from './CanvasOverlayButton.css';
+import type THREE from 'three';
+
+type Props = {
+	width: number,
+	height: number,
+	rendererID?: ?string, // you may set this to a certain string for all your renderers, they will RE-USE the renderer over multiple tabs TODO: EXPERIMENTAL
+
+	volumeSize?: Array<number>, // e.g. [420.5, 420.53, 165.0]
+	atlasGrid?: Array<number>, // rows and colums of the slice atlas e.g. [12, 14]
+	atlasSize: { width: number, height: number }, // resolution of the atlas, e.g. {width:4096, height:4096}
+
+	meshes: Array<THREE.TriangleMesh>, // these are mesh objects which will be rendered by mesh shaders
+
+	imageURLs: Array<string>,
+	colors: Array<string>, // colors: array of hex strings
+	contrasts: Array<number>,
+	brightnesses: Array<number>,
+	transparencies: Array<number>,
+	visibilities: Array<boolean>,
+
+	sliceNum?: number, // not sure what that is...
+
+	cursor?: Array<number>, // Position of the cursor: [120.01, 98.23, 12.7]
+	brushes?: Array<Brush>,
+	selectedBrushName?: ?string,
+	masks?: Array<Mask | Mask2>,
+	selectedMaskName?: ?string,
+
+	showTextbookLabels: boolean,
+	showBoundingBox: boolean,
+	backgroundColour: number,
+
+	mousePickingCallback: (intersects: Array<{
+		point: Array<number>,
+		meshIdentifier: string,
+		distance: number,
+	}>,) => void,
+
+	resetCameraCallback: () => void,
+	
+	//Brain Connectivity Data
+	connectivityConnections?: Array<Connection>,
+	connectivityRegions?: Array<Region>,
+	connectivityIsDirected?: {},
+};
+//type State = { flashWarn: ?string };
+type RenderListItem = ?{
+	url: string,
+	contrast: number,
+	brightness: number,
+	transparency: number,
+	visible: boolean,
+	color: string,
+	finishedLoading: boolean,
+};
+type RenderList = { [slot_id: number]: RenderListItem, maxSlots: number }; // the programmer must ensure that a slot is not undefined at runtime
+
+
+export default class MultiVolumeRenderView extends React.Component<Props> {
+	canvas: ?HTMLCanvasElement;
+	renderList: RenderList;
+	//doesRenderURL: (url: string) => number;
+	//freeRenderSlot: () => number;
+	resetCamera: () => void;
+	renderer: ?Renderer;
+	flashTimeout: ?TimeoutID;
+	rendererID: string;
+	displayName: string;
+
+	static defaultProps = {
+		showTextbookLabels: false,
+		backgroundColour: 0x000000,
+	};
+
+	constructor(props: Props) {
+		super(props);
+	
+		// renderlist with four slots
+		this.renderList = { maxSlots: 4 };
+		this.renderList[0] = undefined;
+		this.renderList[1] = undefined;
+		this.renderList[2] = undefined;
+		this.renderList[3] = undefined;
+		
+		this.resetCamera = this.resetCamera.bind(this);
+
+		if (props.rendererID == null) {
+			throw new Error('[MultiVolumeRenderView] - rendererID prop is not set, but required!');
+		}
+
+		this.rendererID = props.rendererID;
+		//this.updateRenderList = this.updateRenderList.bind(this); // Does not appear to be necessary for some reason!
+		//
+		/* this.state = {
+			flashWarn: undefined,
+		}; */
+	}
+
+	get displayName () { return 'MultiVolumeRenderView'; }
+
+	render() {
+		/* let flash;
+		if (this.state.flashWarn) {
+			flash = <div className={styles.flash}>{this.state.flashWarn}</div>;
+		} */
+		let canvasOverlayTextbookLabels;
+		let canvasOverlayTextbookNetwork;
+		if (this.props.showTextbookLabels &&
+			 this.renderer != null
+			 ) {
+				 const connectivityRegions = this.props.connectivityRegions == null ? [] : this.props.connectivityRegions;
+			canvasOverlayTextbookLabels = (
+				<CanvasOverlayTextbookLabels
+					renderer={this.renderer}
+					meshes={this.props.meshes}
+					regions={connectivityRegions}
+					width={this.props.width}
+					height={this.props.height}
+				/>
+			);
+		}
+		return (
+			<div>
+				{canvasOverlayTextbookLabels}
+				<div style={{ position: 'absolute', padding: '2px' }}>
+					<button
+						type="button"
+						className={'btn ' + styles.btnCanvasOverlay}
+						onClick={()=>{
+								this.props.resetCameraCallback();
+								this.resetCamera();
+							}
+						}
+					>
+						<span className="glyphicon glyphicon-home" aria-hidden="true" />
+					</button>
+				</div>
+				<canvas
+					ref={canvas => {
+						this.canvas = canvas;
+					}}
+				/>
+			</div>
+		);
+	}
+
+	componentDidMount() {
+		// Init renderer
+		this.initRenderer();
+		if (this.renderer != null) {
+			this.renderer.setSize(this.props.width, this.props.height);
+			if (this.renderer) {
+				this.renderer.render();
+			}
+		}
+	}
+
+	componentDidUpdate() {
+		this.updateRendererProps(this.props);
+		if (this.renderer) {
+			this.renderer.setSize(this.props.width, this.props.height);
+			if (this.renderer) {
+				this.renderer.render();
+			}
+		}
+	}
+	/* 
+	componentWillUnmount() {
+		// We will never destroy old renderers now because they MAY be RE-USED somewhere
+		if (this.renderer) {
+			this.renderer.destroy();
+		}
+		this.renderer = undefined;
+	} */
+
+	initRenderer() {
+		console.log("[MultiVolumeRenderer] - initRenderer ", this.rendererID);
+		if (this.canvas) {
+			if (window.renderers == undefined) {
+				window.renderers = {};
+			}
+			if (window.renderers != null && window.renderers[this.rendererID] != undefined) {
+				this.renderer = window.renderers[this.rendererID];
+				this.renderer.setCanvasAndSize(
+					this.canvas,
+					this.props.width,
+					this.props.height
+				);
+			} else {
+				this.renderer = new Renderer(
+					this.canvas,
+					this.props.width,
+					this.props.height,
+					this.rendererID,
+				);
+				window.renderers[this.rendererID] = this.renderer; // keep this object global so it may be RE-USED in different pages
+			}
+		}
+
+		this.updateRendererProps(this.props);
+	}
+
+
+	resetCamera() {
+		if (this.renderer) {
+			this.renderer.resetCamera();
+		}
+	}
+
+	// set new Volume if something has changed
+	updateRenderList(
+		imageURLs: Array<string>,
+		colors: Array<string>,
+		contrasts: Array<number>,
+		brightnesses: Array<number>,
+		transparencies: Array<number>,
+		visibilities: Array<boolean>,
+	) {
+		//function DEBUGlogRL(msg, rl) {
+		//	console.log('RENDERLIST ',msg, ': [\n', 
+		//			rl[0] ? rl[0].url : 'nil','\n',
+		//			rl[1] ? rl[1].url : 'nil','\n',
+		//			rl[2] ? rl[2].url : 'nil','\n',
+		//			rl[3] ? rl[3].url : 'nil','\n]');
+		//}
+
+		//DEBUGlogRL('INIT', this.renderList);
+		
+
+		if (
+			!(
+				imageURLs &&
+				colors &&
+				contrasts &&
+				brightnesses &&
+				transparencies &&
+				visibilities
+			)
+		) {
+			// do nothing if a value is missing
+			console.error("[MultiVolumeRenderView] - updateRenderList value missing: ", imageURLs, colors, contrasts, brightnesses, transparencies, visibilities);
+			return;
+		}
+
+		// at first we need to remove the onces which are not needed anymore from the renderlist
+		for(let i = 0; i < this.renderList.maxSlots; i++) {
+			if (this.renderList[i]) {
+				const idx = imageURLs.indexOf(this.renderList[i].url);
+				if (idx == -1) {
+					//if (this.renderer) this.renderer.hideVolume(i);
+					//if (this.renderer) this.renderer.setVolume(i, undefined);
+					this.renderList[i] = undefined;
+				}
+			}
+		}
+
+
+		let rendered = {};
+
+		for (let index = 0; index < imageURLs.length; index++) {
+			const url = imageURLs[index];
+			const color = colors[index];
+			const contrast = contrasts[index];
+			const brightness = brightnesses[index];
+			const transparency = transparencies[index];
+			const visible = visibilities[index];
+
+			
+
+			let updated = false;
+			// check if its currently rendered
+			for (let i = 0; i < this.renderList.maxSlots; i++) {
+				if (this.renderList[i]) {
+					if (this.renderList[i].url === url) {
+
+						let item = this.renderList[i];
+						if (item == null) {
+							continue;
+						}
+
+						// to check the slots, we set this
+						rendered[i] = url;
+						updated = true;
+
+						if (
+							color != item.color ||
+							contrast != item.contrast ||
+							brightness != item.brightness ||
+							transparency != item.transparency ||
+							visible != item.visible
+						) {
+
+							item.contrast = contrast;
+							item.brightness = brightness;
+							item.transparency = transparency;
+							item.visible = visible;
+
+							// and update the appearance
+							if (this.renderer) {
+								this.renderer.setAppearance(
+									i,
+									color,
+									contrast,
+									brightness,
+									transparency,
+									visible,
+								);
+							}
+
+						}
+					}
+				}
+			}
+			// we already updated the appearance, we go on to the next image
+			if (updated) {
+				continue;
+			}
+
+			// the item was not found in the current renderlist
+			// find the next free renderslot
+			for (let i = 0; i < this.renderList.maxSlots; i++) {
+				if (
+					this.renderList[i] == undefined ||
+					this.renderList[i].visible == false
+				) { 
+					// found a free slot
+					rendered[i] = url;
+					// and set appearance
+					// and set slot things
+					this.renderList[i] = {
+						url: url,
+						color: color,
+						contrast: contrast,
+						brightness: brightness,
+						transparency: transparency,
+						visible: visible,
+						finishedLoading: false,
+					};
+					// create the image
+					const img = new Image();
+
+					img.onload = () => {
+						if (this.renderList[i]) {
+							if (this.renderList[i].url == url) {
+								let renderSettings = this.renderList[i];
+								renderSettings.finishedLoading = true;
+								if (this.renderer) this.renderer.setVolume(i, img);
+								// What if the appearance changed in between? we should take the currently set one,
+								// not the one which was set at the image loading
+								if (this.renderer)	this.renderer.setAppearance(
+										i,
+										renderSettings.color,
+										renderSettings.contrast,
+										renderSettings.brightness,
+										renderSettings.transparency,
+										renderSettings.visible,
+									);
+							} else {
+								console.log("[MultiVolumeRenderView] - image onLoad - image urls are not the same anymore.", url, this.renderList[i].url);
+							}
+						}
+					};
+
+					img.src = url;
+					
+					updated = true;
+				}
+
+				if (updated) {
+					break; // we dont need a new slot anymore, already found one
+				}
+			}
+
+			if (updated) { 
+				continue; // move on to the next image
+			}
+
+			// we did not find a free renderslot:
+			if (this.flashTimeout) {
+				// do nothing, already notified
+			} else {
+				this.flashTimeout = setTimeout(
+					() => {	this.flashTimeout = undefined; },
+					5000,
+				);
+				console.warn('[MultiVolumeRenderer] - only four images can be rendered at the same time!');
+
+				toast('Render limit of three volume images exceeded.', {
+					position: toast.POSITION.BOTTOM_RIGHT,
+					toastId: this.rendererID,
+					type: toast.TYPE.ERROR,
+				});
+			}
+
+
+		}
+
+		// now we clear all the unset-renderslots to avoid regressions
+		for (let i = 0; i < this.renderList.maxSlots; i++) {
+			if (rendered[i] == undefined) {
+				if (this.renderer) this.renderer.hideVolume(i);
+				if (this.renderer) this.renderer.setVolume(i, undefined);
+			}
+		}
+	}
+
+	updateRendererProps(props: Props) {
+		if (
+			this.renderer &&
+			props.atlasSize &&
+			props.atlasGrid &&
+			props.sliceNum &&
+			props.volumeSize
+		) {
+			this.renderer.defineVolume(
+				props.atlasSize.width,
+				props.atlasSize.height,
+				props.atlasGrid[0],
+				props.atlasGrid[1],
+				props.sliceNum,
+				props.volumeSize,
+			);
+		}
+
+		this.updateRenderList(
+			props.imageURLs,
+			props.colors,
+			props.contrasts,
+			props.brightnesses,
+			props.transparencies,
+			props.visibilities,
+		);
+		
+		if (this.renderer) {
+			const r: Renderer = this.renderer;
+
+			r.setObjects(props.meshes);
+			r.setCursor(props.cursor);
+			r.setShowBoundingBox(props.showBoundingBox);
+			r.setBackgroundColour(props.backgroundColour);
+			r.setMousePickingCallback(props.mousePickingCallback);
+			r.setBrushes(props.brushes);
+			r.setSelectedBrush(props.selectedBrushName);
+			r.setMasks(props.masks);
+			r.setSelectedMask(props.selectedMaskName);
+			
+			//pass Brainconnectivity Data to the renderer
+			r.setConnectivityData(props.connectivityConnections, props.connectivityRegions, props.connectivityIsDirected);
+		}
+	}
+}

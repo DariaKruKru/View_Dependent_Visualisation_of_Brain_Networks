@@ -1,0 +1,37 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "chrome",
+			"request": "launch",
+			"name": "Chrome localhost",
+			"url": "http://localhost:3333/example/index.html",
+			"webRoot": "${workspaceRoot}",
+			"disableNetworkCache": true,
+			"sourceMaps": true,
+			//"userDataDir": "${workspaceRoot}/.vscode/chrome"
+		},
+		{
+			"type": "chrome",
+			"request": "launch",
+			"name": "Chromium Incognito Linux",
+			"runtimeExecutable": "/usr/bin/chromium",
+			"url": "http://localhost:3333/example/index.html",
+			"webRoot": "${workspaceFolder}",
+			"runtimeArgs": [
+				"--remote-debugging-port=9222",
+				"--disable-extensions",
+				"--incognito"
+			],
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "MultiVolumeRenderer Example Server",
+			"program": "${workspaceFolder}/server.js"
+		},
+    ]
+}

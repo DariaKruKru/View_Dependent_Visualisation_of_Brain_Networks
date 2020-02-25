@@ -1,0 +1,4 @@
+syntax: glob
+react-parallel-coordinates/node_modules
+react-volume-renderer/node_modules
+react-volume-renderer/dist/

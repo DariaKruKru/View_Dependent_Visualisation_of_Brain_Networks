@@ -1,0 +1,83 @@
+'use strict';
+// @flow
+/******************************************************************************
+ ******************************************************************************
+ **
+ ** Copyright (c) 2011-2017 VRVis Zentrum für Virtual Reality und Visualisierung
+ ** Forschungs-GmbH All rights reserved.
+ **
+ ************************************************************
+ **
+ ** THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE OF VRVis GmbH The copyright
+ ** notice above does not evidence any actual or intended publication of such
+ ** code.
+ **
+ ******************************************************************************
+ ******************************************************************************/
+
+// author: Nicolas Swoboda <swoboda@vrvis.at>
+
+import * as THREE from 'three';
+import { hologramShader } from './shaders/hologramShader.js';
+
+export default class RenderPasshologramMesh {
+	sm_hologramPass: ?THREE.ShaderMaterial;
+	rt_hologram: ?THREE.WebGLRenderTarget;
+
+	constructor() {
+	}
+
+	getRenderTarget(width: number, height: number): THREE.WebGLRenderTarget {
+		if (this.rt_hologram == null) {
+			this.rt_hologram = new THREE.WebGLRenderTarget(width, height, {
+				minFilter: THREE.LinearFilter,
+				magFilter: THREE.LinearFilter,
+				format: THREE.RGBAFormat,
+				stencilBuffer: false,
+				depthBuffer: true, // default is true
+				depthTexture: new THREE.DepthTexture(),
+			});
+		}
+		if (this.rt_hologram.width !== width || this.rt_hologram.height !== height) {
+			this.rt_hologram.setSize(width, height);
+		}
+		return this.rt_hologram;
+	}
+
+
+	/**
+	 * render1 renders the scene meshes into a depth texture
+	 * @param {*} renderer 
+	 * @param {*} sceneBox 
+	 * @param {*} camera 
+	 * @param {*} renderTarget 
+	 */
+	render1(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.PerspectiveCamera, renderTarget: THREE.WebGLRenderTarget, colourWriting: bool): void {
+		if (this.sm_hologramPass == null) {
+			this.sm_hologramPass = new THREE.ShaderMaterial(hologramShader());
+		}
+		this.sm_hologramPass.colorWrite = colourWriting;
+		this.sm_hologramPass.fog = false;
+
+		if ( !this.sm_hologramPass.setProgramNotYetCalled ) {
+			this.sm_hologramPass.setProgramNotYetCalled = true; 
+		}
+		
+		scene.overrideMaterial = this.sm_hologramPass;
+		renderer.setRenderTarget(renderTarget);
+		renderer.render(scene, camera);
+		scene.overrideMaterial = null;
+	}
+
+	destroy() {
+		if (this.sm_hologramPass != null) {
+			this.sm_hologramPass.dispose();
+			this.sm_hologramPass = undefined;
+		}
+		if (this.rt_hologram != null) {
+			this.rt_hologram.dispose();
+			this.rt_hologram = undefined;
+		}
+	}
+}
+	

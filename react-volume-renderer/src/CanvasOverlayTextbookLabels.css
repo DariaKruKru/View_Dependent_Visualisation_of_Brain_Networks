@@ -1,0 +1,14 @@
+span.textbooklabel {
+	color: #eee;
+	position: absolute;
+	text-shadow: black 1px 1px 2px;
+	/*font-weight: bold;*/
+	font-family: monospace;
+	/*display: block;*/
+
+	/* the xy position is the top left of the label. I instead center the label around this position */
+	width: 10em;
+	margin-left: -5em;
+	margin-top: -.5em;
+	text-align: center;
+}

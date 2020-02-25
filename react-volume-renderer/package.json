@@ -1,0 +1,64 @@
+{
+  "name": "react-volume-renderer",
+  "version": "1.4.4",
+  "description": "VRVis biomedvis ReactJS volume and geometry renderer component",
+  "main": "index.js",
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack --config webpack.production.config.js",
+    "start-dev": "node server.js",
+    "prepublish": "rm -rf ./dist && npm run build",
+    "debug": "rm -rf ./dist && webpack --config webpack.debug.config.js",
+    "flow": "flow"
+  },
+  "author": "Nicolas Swoboda, VRVis",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.4.0",
+    "@babel/plugin-proposal-class-properties": "^7.4.0",
+    "@babel/plugin-proposal-export-default-from": "^7.2.0",
+    "@babel/plugin-proposal-export-namespace-from": "^7.2.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.4.0",
+    "@babel/plugin-proposal-throw-expressions": "^7.2.0",
+    "@babel/plugin-transform-flow-strip-types": "^7.4.0",
+    "@babel/plugin-transform-runtime": "^7.4.0",
+    "@babel/preset-env": "^7.4.2",
+    "@babel/preset-flow": "^7.0.0",
+    "@babel/preset-react": "^7.0.0",
+    "@babel/preset-stage-0": "^7.0.0",
+    "@babel/runtime": "^7.4.2",
+    "babel-loader": "^8.0.5",
+    "chroma-js": "^2.0.3",
+    "css-loader": "^2.1.1",
+    "exports-loader": "^0.7.0",
+    "flow-bin": "^0.95.1",
+    "imports-loader": "^0.8.0",
+    "react": "^16.8.6",
+    "react-color": "^2.17.0",
+    "react-dom": "^16.8.6",
+    "react-hot-loader": "^4.8.0",
+    "react-resizable": "^1.7.5",
+    "style-loader": "^0.23.1",
+    "three": "^0.103.0",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.3.0",
+    "webpack-dev-server": "^3.2.1",
+    "webpack-glsl-loader": "^1.0.1"
+  },
+  "dependencies": {
+    "react-three-renderer": "^3.2.4",
+    "react-three-renderer-objects": "0.0.6",
+    "three-gltf-loader": "^1.103.0",
+    "three-orbitcontrols": "^2.102.1"
+  },
+  "peerDependencies": {
+    "react": "^16.7.0",
+    "react-dom": "^16.7.0",
+    "chroma-js": "^2.0.2",
+    "three": "^0.103.0"
+  }
+}

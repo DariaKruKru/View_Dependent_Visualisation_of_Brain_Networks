@@ -1,0 +1,11 @@
+# /node_modules/* and /bower_components/* ignored by default
+
+# Ignore built files
+build/*
+lib/*
+www/*
+node_modules/
+node_modules/*
+/node_modules/*
+local_modules/*
+bower_components/*

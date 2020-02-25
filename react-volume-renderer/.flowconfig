@@ -1,0 +1,11 @@
+
+[options]
+
+module.name_mapper='\(.*\)!\.\./\(node_modules.*\)$' -> '<PROJECT_ROOT>/\2'
+
+module.name_mapper.extension='css' -> '<PROJECT_ROOT>/CSSModuleStub.js'
+module.name_mapper.extension='svg' -> '<PROJECT_ROOT>/ImageModuleStub.js'
+module.name_mapper.extension='png' -> '<PROJECT_ROOT>/ImageModuleStub.js'
+module.name_mapper.extension='jpg' -> '<PROJECT_ROOT>/ImageModuleStub.js'
+module.name_mapper.extension='gif' -> '<PROJECT_ROOT>/ImageModuleStub.js'
+module.name_mapper.extension='glsl' -> '<PROJECT_ROOT>/GLSLModuleStub.js'

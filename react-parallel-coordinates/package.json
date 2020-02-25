@@ -1,0 +1,44 @@
+{
+  "name": "react-parallel-coordinates",
+  "version": "0.4.0",
+  "description": "A ReactJS wrapper for the parallel coordinates d3 toolkit (using the old d3 version 3.5)",
+  "scripts": {
+    "start": "node ./example/server.js"
+  },
+  "keywords": [
+    "react",
+    "parallel coordinates",
+    "wrapper",
+    "d3"
+  ],
+  "author": {
+    "name": "Nicolas Swoboda, VRVis"
+  },
+  "license": "see the LICENCE file(s)",
+  "homepage": "https://code.vrvis.at/BrainStar/react-shared-components/react-parallel-coordinates",
+  "bugs": "https://code.vrvis.at/BrainStar/react-shared-components",
+  "devDependencies": {
+    "babel": "^6.1.18",
+    "babel-core": "^6.1.21",
+    "babel-loader": "^6.2.0",
+    "babel-preset-es2015": "^6.1.18",
+    "babel-preset-react": "^6.1.18",
+    "babel-preset-stage-0": "^6.1.18",
+    "css-loader": "^0.24.0",
+    "exports-loader": "^0.6.2",
+    "json-loader": "^0.5.2",
+    "jsx-loader": "^0.13.2",
+    "queue-async": "^1.0.7",
+    "react": "^15.3.2",
+    "react-dom": "^15.3.2",
+    "react-hot-loader": "^1.2.7",
+    "style-loader": "^0.13.0",
+    "webpack": "^1.13.3",
+    "webpack-dev-server": "^1.16.2"
+  },
+  "dependencies": {
+    "create-react-class": "^15.6.2",
+    "d3": "3.5.17"
+  },
+  "main": "./react-parallel-coordinates.js"
+}

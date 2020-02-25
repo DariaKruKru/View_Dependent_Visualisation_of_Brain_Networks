@@ -1,0 +1,16 @@
+{  
+    "editor.insertSpaces": false,
+    //"typescript.check.tscVersion": false,
+    "typescript.autoImportSuggestions.enabled": false,
+    "javascript.validate.enable": false,
+    "flow.enabled": true,
+    "flow.useNPMPackagedFlow": true,
+    //"jest.pathToJest": "../node_modules/.bin/jest",
+    //"jest.rootPath": "./app",
+    "jest.autoEnable": true,
+    //"jest.pathToConfig": "./"
+    "jest.runAllTestsFirst": false,
+    "editor.detectIndentation": false,
+	"editor.autoIndent": true,
+	"prettier.eslintIntegration": true
+}

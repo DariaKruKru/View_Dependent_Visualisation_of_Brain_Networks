@@ -1,0 +1,1 @@
+Rename to hologramShader, increase glow intensity
