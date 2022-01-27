@@ -43,7 +43,7 @@
     "react-hot-loader": "^4.8.0",
     "react-resizable": "^1.7.5",
     "style-loader": "^0.23.1",
-    "three": "^0.103.0",
+    "three": "^0.137.0",
     "webpack": "^4.29.6",
     "webpack-cli": "^3.3.0",
     "webpack-dev-server": "^3.2.1",
@@ -59,6 +59,6 @@
     "react": "^16.7.0",
     "react-dom": "^16.7.0",
     "chroma-js": "^2.0.2",
-    "three": "^0.103.0"
+    "three": "^0.137.0"
   }
 }
